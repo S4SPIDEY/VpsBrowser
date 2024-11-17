@@ -16,7 +16,6 @@ fi
 IP=$(curl -s ifconfig.me)
 read -p "Enter your username(a-z,0-9 only): " USERNAME
 read -p "Enter your password: " PASSWORD
-
 #USERNAME="abc"
 #PASSWORD="123"
 
@@ -29,8 +28,12 @@ BASE_HTTPS_PORT=3001
 HTTP_PORT=$((BASE_HTTP_PORT + INSTANCE_ID % 1000)) # Ensures no overlap for a while
 HTTPS_PORT=$((BASE_HTTPS_PORT + INSTANCE_ID % 1000))
 
+# Generate random MAC address
+RANDOM_MAC=$(printf '02:00:%02x:%02x:%02x:%02x\n' $((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256)))
+
 # Define unique credentials file for this instance
-CREDENTIALS_FILE="$HOME/vps-browser-credentials-${INSTANCE_ID}.json"
+mkdir creds
+CREDENTIALS_FILE="$HOME/creds/vps-browser-credentials-${INSTANCE_ID}.json"
 
 # Check if Docker is installed
 if ! [ -x "$(command -v docker)" ]; then
@@ -60,7 +63,7 @@ fi
 CONFIG_DIR="$HOME/chromium/config_${INSTANCE_ID}"
 mkdir -p "$CONFIG_DIR"
 
-# Run a new Docker container for this instance
+# Run a new Docker container for this instance with random MAC address
 CONTAINER_NAME="browser_${INSTANCE_ID}"
 show "Running Chromium Docker container: $CONTAINER_NAME..."
 sudo docker run -d --name $CONTAINER_NAME \
@@ -74,6 +77,7 @@ sudo docker run -d --name $CONTAINER_NAME \
   -v "$CONFIG_DIR:/config" \
   -p $HTTP_PORT:3000 \
   -p $HTTPS_PORT:3001 \
+  --mac-address="$RANDOM_MAC" \
   --shm-size="1gb" \
   --restart unless-stopped \
   lscr.io/linuxserver/chromium:latest
@@ -81,21 +85,21 @@ sudo docker run -d --name $CONTAINER_NAME \
 # Save credentials to a file
 cat <<EOL > "$CREDENTIALS_FILE"
 {
-  "username": "$USERNAME",
-  "httpsport": "$HTTPS_PORT",
-  "password": "$PASSWORD"
+  "AccessPoint": "https://$IP:$HTTPS_PORT/",
+  "username": "$USERNAME"
+  "password": "$PASSWORD",
+  "mac_address": "$RANDOM_MAC"
 }
 EOL
-
 
 # Check if the container started successfully
 if [ $? -eq 0 ]; then
   show "Chromium Docker container $CONTAINER_NAME started successfully."
-  show "Click on http://$IP:$HTTP_PORT/ or https://$IP:$HTTPS_PORT/ to run the browser externally."
+  show "Copy the link https://$IP:$HTTPS_PORT/ and open it from your local PC browser."
   show "Use the username: $USERNAME and password: $PASSWORD to log in."
+  show "MAC Address: $RANDOM_MAC"
   show "Credentials are also saved in $CREDENTIALS_FILE."
 else
   show "Failed to start the Chromium Docker container $CONTAINER_NAME."
   exit 1
 fi
-
