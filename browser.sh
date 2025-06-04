@@ -32,7 +32,7 @@ HTTPS_PORT=$((BASE_HTTPS_PORT + INSTANCE_ID % 1000))
 RANDOM_MAC=$(printf '02:00:%02x:%02x:%02x:%02x\n' $((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256)))
 
 # Define unique credentials file for this instance
-mkdir creds
+mkdir $HOME/creds
 CREDENTIALS_FILE="$HOME/creds/vps-browser-credentials-${INSTANCE_ID}.json"
 
 # Check if Docker is installed
@@ -78,7 +78,7 @@ sudo docker run -d --name $CONTAINER_NAME \
   -p $HTTP_PORT:3000 \
   -p $HTTPS_PORT:3001 \
   --mac-address="$RANDOM_MAC" \
-  --shm-size="1gb" \
+  --shm-size="2gb" \
   --restart unless-stopped \
   lscr.io/linuxserver/chromium:latest
 
@@ -97,7 +97,6 @@ if [ $? -eq 0 ]; then
   show "Chromium Docker container $CONTAINER_NAME started successfully."
   show "Copy the link https://$IP:$HTTPS_PORT/ and open it from your local PC browser."
   show "Use the username: $USERNAME and password: $PASSWORD to log in."
-  show "MAC Address: $RANDOM_MAC"
   show "Credentials are also saved in $CREDENTIALS_FILE."
 else
   show "Failed to start the Chromium Docker container $CONTAINER_NAME."
