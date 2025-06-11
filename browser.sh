@@ -23,8 +23,8 @@ read -p "Enter your password: " PASSWORD
 INSTANCE_ID=$(date +%s)
 
 # Generate unique ports
-BASE_HTTP_PORT=3000
-BASE_HTTPS_PORT=3001
+BASE_HTTP_PORT=7000
+BASE_HTTPS_PORT=7001
 HTTP_PORT=$((BASE_HTTP_PORT + INSTANCE_ID % 1000)) # Ensures no overlap for a while
 HTTPS_PORT=$((BASE_HTTPS_PORT + INSTANCE_ID % 1000))
 
